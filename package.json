@@ -1,0 +1,29 @@
+{
+  "name": "multi-muse-ml",
+  "version": "1.0.0",
+  "description": "Analyze multiple Muse headbands using Jason Snell's ML model",
+  "homepage": "https://github.com/m-yac/multi-muse-ml#readme",
+  "bugs": {
+    "url": "https://github.com/m-yac/multi-muse-ml/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/m-yac/multi-muse-ml.git"
+  },
+  "license": "ISC",
+  "author": "Matthew Yacavone",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "web-muse": "file:./web-muse"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}

@@ -1,0 +1,6 @@
+[submodule "web-muse"]
+	path = web-muse
+	url = https://github.com/m-yac/web-muse.git
+[submodule "Muse-ML-MIDI"]
+	path = Muse-ML-MIDI
+	url = https://github.com/jasonjsnell/Muse-ML-MIDI.git

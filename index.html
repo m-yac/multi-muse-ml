@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test</title>
+</head>
+<body>
+    <button id="connectButton">Connect</button>
+    <button id="disconnectButton" disabled>Disconnect</button>
+
+    <h3>EEG Data:</h3>
+    <div id="eegData">...</div>
+
+    <script type="module">
+        import { connectMuse } from "web-muse";
+
+        let muse = null;
+        let eegInterval = null;
+
+        const statusBox = document.getElementById('statusBox');
+        const connectButton = document.getElementById('connectButton');
+        const disconnectButton = document.getElementById('disconnectButton');
+        const eegDataDiv = document.getElementById('eegData');
+
+        function updateStatus(message, type = 'info') {
+            statusBox.textContent = message;
+            statusBox.className = `status-box ${type}`;
+        }
+
+        function updateEEGData(data) {
+            const d = new Date();
+            const timestamp = d.toLocaleTimeString() + ` (${String(d.getMilliseconds()).padStart(3,'0')}ms)`;
+            eegDataDiv.innerHTML = `
+                <strong>Last Update:</strong> ${timestamp}<br>
+                <strong>EEG Channels:</strong><br>
+                ${data.map((channel, index) => `Channel ${index + 1}: ${JSON.stringify(channel)}`).join('<br>')}
+            `;
+        }
+
+        async function connectToMuse() {
+            try {
+                connectButton.disabled = true;
+
+                muse = await connectMuse();
+
+                connectButton.disabled = true;
+                disconnectButton.disabled = false;
+
+                eegInterval = setInterval(() => {
+                    try {
+                        const eegData = muse.eeg.map((buffer) => buffer.read());
+                        updateEEGData(eegData);
+                    } catch (error) {
+                        console.error('Error reading EEG data:', error);
+                    }
+                }, 1000 / 256); // 256Hz sampling rate
+
+            } catch (error) {
+                console.error('Connection failed:', error);
+                updateStatus(`Connection failed: ${error.message}`, 'error');
+                connectButton.disabled = false;
+            }
+        }
+
+        function disconnect() {
+            if (eegInterval) {
+                clearInterval(eegInterval);
+                eegInterval = null;
+            }
+
+            if (muse && muse.disconnect) {
+                muse.disconnect();
+            }
+
+            muse = null;
+            connectButton.disabled = false;
+            disconnectButton.disabled = true;
+            eegDataDiv.textContent = '...';
+        }
+
+        connectButton.addEventListener('click', connectToMuse);
+        disconnectButton.addEventListener('click', disconnect);
+
+        // Check if Web Bluetooth is supported
+        if (!navigator.bluetooth) {
+            eegDataDiv.innerHTML = 'Bluetooth not supported in this browser!';
+            connectButton.disabled = true;
+        }
+    </script>
+</body>
+</html>
