@@ -59,3 +59,5 @@ def onWebSocketReceivePing(webServerDAT, client, data):
 If this Web Server DAT is **Active** when the headband is connected,
 then the OSC data will be available via **UDP** on **Port 9000** (or whatever was set for `OSC_PORT`).
 This data can then be received using an **OSC In CHOP** in the usual way.
+
+For channels that send their data in packets, you will want to **turn on** `queued` in your **OSC In CHOP**. Otherwise, only the most recent sample from each packet will be recorded. The downside is that this introduces a bit of delay – for data where its low-frequency component is the only part you care about, it might makes sense to leave `queued` off (therefore ignoring these samples in favor of zero lag).
