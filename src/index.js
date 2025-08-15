@@ -1,4 +1,5 @@
-import { ML_OSCMuse, BUFFER_SIZE } from './ML_OSCMuse.js';
+import { MLMuse, BUFFER_SIZE } from './MLMuse.js';
+import { ML } from './ML.js';
 import Chart from 'chart.js/auto';
 
 // Global variables for charts and data tracking
@@ -10,7 +11,7 @@ let accelChart = null;
 let gyroChart = null;
 let muse = null;
 
-const maxDataPoints = BUFFER_SIZE; // Use BUFFER_SIZE from ML_OSCMuse
+const maxDataPoints = BUFFER_SIZE; // Use BUFFER_SIZE from MLMuse
 
 // Configuration flags
 const enablePPGFiltering = false; // Set to false to disable PPG high-pass filtering
@@ -423,8 +424,9 @@ async function handleConnect() {
         connectButton.disabled = true;
         console.log('Connecting to Muse...');
 
-        // Create ML_OSCMuse instance with WebSocket OSC settings
-        muse = new ML_OSCMuse({ host: '127.0.0.1', port: 8080 });
+        // Create ML instance and MLMuse instance
+        const ml = new ML();
+        muse = new MLMuse(ml);
         
         // Connect to the muse
         await muse.connect();
@@ -453,11 +455,11 @@ function startDataCollection() {
         }
 
         try {
-            // Get buffered data from ML_OSCMuse (last 256 samples)
-            const eegData = muse.getAllEEGBuffers();
-            const ppgData = muse.getAllPPGBuffers();
-            const accelData = muse.getAllAccelerometerBuffers();
-            const gyroData = muse.getAllGyroscopeBuffers();
+            // Get buffered data from MLMuse (last 256 samples)
+            const eegData = muse.eegBuffers;
+            const ppgData = muse.ppgBuffers;
+            const accelData = muse.accelerometerBuffers;
+            const gyroData = muse.gyroscopeBuffers;
 
             // Update charts with buffered data for better synchronization
             updateChartsWithBufferedData(eegData, ppgData, accelData, gyroData);
@@ -483,7 +485,7 @@ function updateStatus() {
     // Update status display
     statusBox.innerHTML = `
         <strong>Status:</strong> Connected<br>
-        <strong>Battery:</strong> ${muse?.getBatteryBuffer()?.[0] || 'Unknown'}%<br>
+        <strong>Battery:</strong> ${muse?.batteryLevel || 'Unknown'}%<br>
         <strong>EEG Last Update:</strong> ${lastUpdateTimes.eeg || 'No data'}<br>
         <strong>PPG Last Update:</strong> ${lastUpdateTimes.ppg || 'No data'}<br>
         <strong>Accel Last Update:</strong> ${lastUpdateTimes.accel || 'No data'}<br>
