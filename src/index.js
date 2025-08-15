@@ -9,6 +9,7 @@ let ppg2Chart = null;
 let ppg3Chart = null;
 let accelChart = null;
 let gyroChart = null;
+let spectrumChart = null;
 let muse = null;
 
 const maxDataPoints = BUFFER_SIZE; // Use BUFFER_SIZE from MLMuse
@@ -69,6 +70,7 @@ function initCharts() {
     initPPG3Chart();
     initAccelChart();
     initGyroChart();
+    initSpectrumChart();
 }
 
 function initEEGChart() {
@@ -335,6 +337,57 @@ function initGyroChart() {
     });
 }
 
+function initSpectrumChart() {
+    const ctx = document.getElementById('spectrumChart').getContext('2d');
+
+    spectrumChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'EEG Spectrum',
+                data: [],
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.1,
+                pointRadius: 0,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    type: 'linear',
+                    title: {
+                        display: true,
+                        text: 'Frequency (Hz)'
+                    },
+                    min: 0,
+                    max: 50
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Magnitude'
+                    },
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true
+                },
+                title: {
+                    display: true,
+                    text: 'Real-time EEG Frequency Spectrum'
+                }
+            },
+            animation: false
+        }
+    });
+}
+
 // High-pass filter function (simple first-order IIR filter)
 // Cutoff frequency around 0.5 Hz to remove DC offset
 function highPassFilter(input, filterState, alpha = 0.995) {
@@ -374,6 +427,9 @@ function updateChartsWithBufferedData(eegData, ppgData, accelData, gyroData) {
 
     updateBufferedChart(accelChart, accelData, 'accel');
     updateBufferedChart(gyroChart, gyroData, 'gyro');
+
+    // Update spectrum chart
+    updateSpectrumChart();
 }
 
 
@@ -417,6 +473,36 @@ function updateBufferedChart(chart, data, chartType) {
 // Keep the old function for backwards compatibility if needed
 function updateArrayChart(chart, data, chartType) {
     updateBufferedChart(chart, data, chartType);
+}
+
+function updateSpectrumChart() {
+    if (!spectrumChart || !muse || !muse.eeg || !muse.eeg.eegSpectrum) return;
+
+    const spectrum = muse.eeg.eegSpectrum;
+    const dataset = spectrumChart.data.datasets[0];
+    
+    // Clear existing data
+    dataset.data = [];
+    
+    // Calculate frequency bins (based on EEG.js: sample rate 220 Hz, buffer size 256)
+    const sampleRate = 220;
+    const bufferSize = 128; // Half of 256 for spectrum
+    const freqInc = sampleRate / (bufferSize * 2);
+    
+    // Add spectrum data points up to 50 Hz
+    for (let i = 0; i < spectrum.length && i * freqInc <= 50; i++) {
+        const frequency = i * freqInc;
+        const magnitude = spectrum[i];
+        
+        if (magnitude !== null && magnitude !== undefined) {
+            dataset.data.push({
+                x: frequency,
+                y: magnitude
+            });
+        }
+    }
+    
+    spectrumChart.update('none');
 }
 
 async function handleConnect() {
@@ -515,7 +601,7 @@ function disconnect() {
     lastUpdateTimes = { eeg: null, ppg: null, accel: null, gyro: null };
 
     // Clear all chart data and reset counters
-    [eegChart, ppg1Chart, ppg2Chart, ppg3Chart, accelChart, gyroChart].forEach(chart => {
+    [eegChart, ppg1Chart, ppg2Chart, ppg3Chart, accelChart, gyroChart, spectrumChart].forEach(chart => {
         if (chart) {
             chart.data.datasets.forEach(dataset => {
                 dataset.data = [];

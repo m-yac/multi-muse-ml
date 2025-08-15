@@ -72,12 +72,23 @@ export class MLMuse extends OSCMuse {
         }
         else if (n+1 == 2) {
             this.eeg.process(0, samples);
-            // Only do this once per update (every 1000/(256/12) = 46.875ms)
-            this.sendOSCMessage('spectrum', ...this.eeg.eegSpectrum.slice(0, 48));
-            // this.mlState = this.ml.classifyLiveEEG(this.eeg);
-            // for (const st in this.mlState) {
-            //     this.sendOSCMessage(`mlState/${st}`, this.mlState[st]);
-            // }
+
+            // Only do the rest once per update (every 1000/(256/12) = 46.875ms)
+
+            // Send additional EEG data over OSC
+            this.sendOSCMessage('elements/spectrum', ...this.eeg.eegSpectrum.slice(0, 48));
+            this.sendOSCMessage('elements/delta_absolute', this.eeg.delta);
+            this.sendOSCMessage('elements/theta_absolute', this.eeg.theta);
+            this.sendOSCMessage('elements/alpha_absolute', this.eeg.alpha);
+            this.sendOSCMessage('elements/beta_absolute', this.eeg.beta); 
+            this.sendOSCMessage('elements/gamma_absolute', this.eeg.gamma);
+
+            // Run the ML model and send the results over OSC
+            this.ml.classifyLiveEEG(this.eeg, this.mlState);
+            for (const st in this.mlState) {
+                this.sendOSCMessage(`elements/${st}`, this.mlState[st]);
+            }
+            
             // this.eeg.runEEGPeakDetectors(this.mlState);
         }
         

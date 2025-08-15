@@ -99,8 +99,6 @@ export class ML {
                 await ml5.tf.setBackend('cpu');
             }
             
-            console.log('TensorFlow backend:', ml5.tf.getBackend());
-
             //setup NN
             let options = {
               inputs: INPUTS_TOTAL,
@@ -189,22 +187,15 @@ export class ML {
       //setInterval(classifyLiveEEG, 50);
     }
     
-    classifyLiveEEG(eeg) {
+    classifyLiveEEG(eeg, state) {
       //only classify if live data is coming from the headset
       if (eeg.eegSpectrum[0] > 0) {
         let hzBins = eeg.eegSpectrum.slice(0, 48);
-        this.neuralNetwork.classify(hzBins, this.stateDetected.bind(this, eeg));
+        this.neuralNetwork.classify(hzBins, this.stateDetected.bind(this, eeg, state));
       }
     }
     
-    stateDetected(eeg, error, results) {
-      if (error) {
-        console.log("stateDetected error:", error);
-        return;
-      } else {
-        //populate vars
-        let state = {};
-
+    stateDetected(eeg, state, results) {
         //noise values
         let _noise = 0;
         let _loose = 0;
@@ -224,7 +215,7 @@ export class ML {
         for (let i = 0; i < results.length; i++) {
           let result = results[i];
           let label = result.label;
-          let confidence = result.confidence.toFixed(4);
+          let confidence = result.confidence;//.toFixed(4);
     
           //populate vars if they have signifant value
     
@@ -310,9 +301,6 @@ export class ML {
             } 
           //}
         }
-    
-        return state;
-      }
     
       //print results
       /*if (error) {

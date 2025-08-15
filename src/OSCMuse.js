@@ -68,10 +68,6 @@ export class OSCMuse extends MuseBase {
     }
 
     eegData(channelIndex, samples) {
-        // Normalize into range [-1, 1)
-        samples = samples.map(function (x) {
-            return (x - 0x800) / 2048;
-        });
         this.sendBufferedData('eeg', channelIndex, this.eegBuffer, samples);
     }
 
@@ -80,7 +76,6 @@ export class OSCMuse extends MuseBase {
     }
 
     disconnected() {
-        this.sendOSCMessage('status', 'disconnected');
         if (this.osc) {
             try {
                 this.osc.close();

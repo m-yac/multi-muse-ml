@@ -1,7 +1,7 @@
 import { STATE_MUSCLE, STATE_DREAM, STATE_MEDIT, STATE_FOCUS } from './Constants.js';
 import { MuseDataBuffer } from './MuseDataBuffer.js';
 import { EEGPeakDetector } from './EEGPeakDetector.js';
-import FFT from 'fft.js';
+import { FFT } from './FFT.js';
 
 // ============================================
 //  Adapted from: Muse-ML-MIDI/muse/museEEG.js
@@ -42,8 +42,7 @@ export class EEGSensor {
 
         //fft to process time based samples in buffer into a frequency based spectrum
         let MUSE_SAMPLE_RATE = 220;
-        this.fft = new FFT(this.EEG_BUFFER_SIZE);
-        this.fftOutput = this.fft.createComplexArray();
+        this.fft = new FFT(this.EEG_BUFFER_SIZE, MUSE_SAMPLE_RATE);
         
         //divide the sample rate by the buffer size to get how many frequencies are covered per fft bin
         let freqInc = (MUSE_SAMPLE_RATE / this.EEG_BUFFER_SIZE)
@@ -110,15 +109,7 @@ export class EEGSensor {
         let sensorBuffer = this.buffer.update(withSamples)
 
         //turn samples into a frequency spectrum using FFT
-        this.fft.realTransform(this.fftOutput, sensorBuffer);
-        
-        // Convert complex array to magnitude spectrum
-        this.spectrum = [];
-        for (let i = 0; i < this.fftOutput.length; i += 2) {
-            const real = this.fftOutput[i];
-            const imag = this.fftOutput[i + 1];
-            this.spectrum.push(Math.sqrt(real * real + imag * imag));
-        }
+        this.spectrum = this.fft.forward(sensorBuffer);
         //console.log("spectrum", this.spectrum);
 
         for (let i = 0; i < this.waves.length; i++) {
