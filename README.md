@@ -26,3 +26,36 @@ Wherever possible, this is compatible with the [Mind Monitor](https://mind-monit
 | **Battery Level**  | `/muse/batt`                    | `f`       | Battery percentage                 | 0.1Hz                               |
 | **Accelerometer**  | `/muse/acc`                     | `f f f`   | X, Y, Z acceleration               | 52Hz (in packets of 3 at 17.33Hz)   |
 | **Gyroscope**      | `/muse/gyro`                    | `f f f`   | X, Y, Z rotation                   | 52Hz (in packets of 3 at 17.33Hz)   |
+
+## TouchDesigner Integration
+
+To integrate with TouchDesigner, first make a **Web Server DAT** on **Port 8080** with the following for its callback:
+```python
+import socket
+
+OSC_HOST = '127.0.0.1'
+OSC_PORT = 9000
+
+def onWebSocketReceiveBinary(webServerDAT, client, data):
+	try:
+		sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		sock.sendto(bytes(data), (OSC_HOST, OSC_PORT))
+		sock.close()
+		# print(f"Forwarded {len(osc_data)} bytes of OSC data to {OSC_HOST}:{OSC_PORT}")
+	except Exception as e:
+		print(f"Error forwarding OSC data: {e}")
+	return
+
+def onHTTPRequest(webServerDAT, request, response):
+	response['statusCode'] = 200 # OK
+	response['statusReason'] = 'OK'
+	response['data'] = '<b>TouchDesigner: </b>' + webServerDAT.name
+	return response
+
+def onWebSocketReceivePing(webServerDAT, client, data):
+	webServerDAT.webSocketSendPong(client, data=data);
+	return
+```
+If this Web Server DAT is **Active** when the headband is connected,
+then the OSC data will be available via **UDP** on **Port 9000** (or whatever was set for `OSC_PORT`).
+This data can then be received using an **OSC In CHOP** in the usual way.
