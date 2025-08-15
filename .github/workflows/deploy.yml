@@ -35,13 +35,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build
+        run: npm run build
+
       - name: Copy ML model files
         run: |
           mkdir -p dist/Muse-ML-MIDI/model
           cp -r Muse-ML-MIDI/model/* dist/Muse-ML-MIDI/model/
-
-      - name: Build
-        run: npm run build
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
